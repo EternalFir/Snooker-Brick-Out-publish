@@ -1,3 +1,0 @@
-/mnt/d/SJTU/TA/ppca/Brick-Out-Similator/cmake-build-debug/CMakeFiles/brick_out_simulator.dir
-/mnt/d/SJTU/TA/ppca/Brick-Out-Similator/cmake-build-debug/CMakeFiles/edit_cache.dir
-/mnt/d/SJTU/TA/ppca/Brick-Out-Similator/cmake-build-debug/CMakeFiles/rebuild_cache.dir
