@@ -5,13 +5,14 @@
 #ifndef BRICK_OUT_GAME_H
 #define BRICK_OUT_GAME_H
 
-#include <iostream>
-#include <fstream>
-#include <string>
 #include <algorithm>
-#include <queue>
 #include <cmath>
+#include <fstream>
+#include <iostream>
+#include <queue>
 #include <set>
+#include <string>
+#include <unordered_map>
 
 class Game {
 private:
