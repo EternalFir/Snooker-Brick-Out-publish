@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/brick_out_simulator.dir/main.cpp.o -o brick_out_simulator 
