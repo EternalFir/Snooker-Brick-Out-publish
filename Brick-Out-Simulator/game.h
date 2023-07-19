@@ -1,11 +1,9 @@
-//
-// Created by Eternal-Fir on 2023/7/18.
-//
-
 #ifndef BRICK_OUT_GAME_H
 #define BRICK_OUT_GAME_H
 
 #include <algorithm>
+#include <array>
+#include <bitset>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -15,10 +13,10 @@
 #include <unordered_map>
 
 class Game {
-private:
+public:
     static const int k_max_n = 1e3;
 
-    std::fstream map;
+    std::istream &map;
 
 
     int k, n, m, s;
@@ -30,6 +28,8 @@ private:
     class Map {
     public:
         int bricks[2 * k_max_n + 1][2 * k_max_n + 1];
+        std::array<std::bitset<2 * k_max_n + 1>, 2 * k_max_n + 1> hit;
+        int hits = 0;
 
         Map() {
             for (int i = 0; i < 2 * k_max_n + 1; ++i) {
@@ -39,8 +39,6 @@ private:
             }
         }
 
-        ~Map() {}
-
         int get_color(const int x, const int y, const int n) {
             if (x < -2 * n || x > 2 * n || y > 3 * n || y <= 0)
                 return 10;
@@ -48,19 +46,19 @@ private:
                 return -1;
             if (y <= n)
                 return -1;
+            if (hit[x + n][y - n]) return -1;
             return bricks[x + n][y - n];
         }
 
-        void set_color(const int x, const int y, const int &new_color, const int n) {
+        void set_hit(const int x, const int y, const int n) {
             if (x >= -n && x <= n && y > 3 * n)
                 return;
             if (x < -n || x > n || !x)
-                throw std::string("set_color: index out of range.");
+                throw std::string("set_hit: index out of range.");
             if (y <= n || y > 3 * n)
-                throw std::string("set_color: index out of range.");
-            if (new_color < -1 || new_color > 5)
-                throw std::string("set_color: wrong color.");
-            bricks[x + n][y - n] = new_color;
+                throw std::string("set_hit: index out of range.");
+            ++hits;
+            hit[x + n][y - n] = true;
         }
     };
 
@@ -195,7 +193,7 @@ private:
                                     if (C.color != -1) { // goes back
                                         if (A.color != 10) {
                                             special_reward_handler(A.color);
-                                            situation_now.map.set_color(A.x, A.y, -1, n);
+                                            situation_now.map.set_hit(A.x, A.y, n);
                                             reward += 1;
                                             touched_bricks.push(A);
                                             touch_cnt++;
@@ -205,7 +203,7 @@ private:
                                     } else {
                                         if (A.color != 10) {
                                             special_reward_handler(A.color);
-                                            situation_now.map.set_color(A.x, A.y, -1, n);
+                                            situation_now.map.set_hit(A.x, A.y, n);
                                             reward += 1;
                                             touched_bricks.push(A);
                                             touch_cnt++;
@@ -216,7 +214,7 @@ private:
                                     if (C.color != -1) {
                                         if (A.color != 10) {
                                             special_reward_handler(A.color);
-                                            situation_now.map.set_color(A.x, A.y, -1, n);
+                                            situation_now.map.set_hit(A.x, A.y, n);
                                             reward += 1;
                                             touched_bricks.push(A);
                                             touch_cnt++;
@@ -225,7 +223,7 @@ private:
                                     } else {
                                         if (A.color != 10) {
                                             special_reward_handler(A.color);
-                                            situation_now.map.set_color(A.x, A.y, -1, n);
+                                            situation_now.map.set_hit(A.x, A.y, n);
                                             reward += 1;
                                             touched_bricks.push(A);
                                             touch_cnt++;
@@ -253,7 +251,7 @@ private:
                             if (A.color != -1) { // touch the brick
                                 if (A.color != 10) {
                                     special_reward_handler(A.color);
-                                    situation_now.map.set_color(A.x, A.y, -1, n);
+                                    situation_now.map.set_hit(A.x, A.y, n);
                                     reward += 1;
                                     touched_bricks.push(A);
                                     touch_cnt++;
@@ -279,7 +277,7 @@ private:
                 if (A.color != -1) {
                     if (A.color != 10) {
                         special_reward_handler(A.color);
-                        situation_now.map.set_color(A.x, A.y, -1, n);
+                        situation_now.map.set_hit(A.x, A.y, n);
                         reward += 1;
                         touched_bricks.push(A);
                         touch_cnt++;
@@ -290,12 +288,6 @@ private:
             }
         }
         return reward;
-//        std::cout << '(' << situation_now.ball.x << ',' << situation_now.ball.y << ')' << std::endl;
-//        while (!touched_bricks.empty()) {
-//            Brick tmp = touched_bricks.front();
-//            std::cout << "brick touched: (" << tmp.x << ',' << tmp.y << ',' << tmp.color << ");\n";
-//            touched_bricks.pop();
-//        }
     }
 
     struct Situation {
@@ -307,21 +299,18 @@ private:
         }
 
     } situation_now;
-
-    int back_up_cnt = 0;
-    std::unordered_map<int, Situation> back_up;
-    std::pair<int,Situation> to_save;
-
 public:
-    Game() {
+    struct Save {
+        Ball ball;
+        std::array<std::bitset<2 * k_max_n + 1>, 2 * k_max_n + 1> hit;
+        int hits;
+    };
 
+    Game(std::istream &mapfile) : map(mapfile) {
         reward = 0;
         op_cnt = 0;
         touch_cnt = 0;
 
-        map.open("../map.in");
-        if (!map.is_open())
-            std::cout << "HHHHHHHHHH" << std::endl;
         map >> k >> n >> m >> s;
         for (int y = 2 * n; y > 0; --y) {
             for (int x = 0; x < n; x++)
@@ -330,15 +319,17 @@ public:
                 map >> situation_now.map.bricks[x][y];
         }
 
-
-//        std::cin >> k >> n >> m >> s;
-//        for (int y = 2 * n; y > 0; --y) {
-//            for (int x = 0; x < n; x++)
-//                std::cin >> bricks[x][y];
-//            for (int x = n + 1; x <= 2 * n; ++x)
-//                std::cin >> bricks[x][y];
-//        }
         situation_now.init();
+    }
+
+    int bricksTotal () {
+        return 4 * n * n;
+    }
+    int bricksHit () {
+        return situation_now.map.hits;
+    }
+    int bricksRemaining () {
+        return bricksTotal() - bricksHit();
     }
 
     int play(char op) {
@@ -349,34 +340,23 @@ public:
         return move(op);
     }
 
-    int save() {
-        back_up_cnt++;
-        to_save.first=back_up_cnt;
-        to_save.second=situation_now;
-        back_up.insert(to_save);
-        return back_up_cnt;
+    Save *save() {
+        return new Save {
+            .ball = situation_now.ball,
+            .hit = situation_now.map.hit,
+            .hits = situation_now.map.hits,
+        };
     }
 
-    bool load(int back_up_id) {
-        if (back_up.find(back_up_id) != back_up.end()) {
-            situation_now=back_up.find(back_up_id)->second;
-            return true;
-        } else
-            return false;
+    void load(Save *save) {
+        situation_now.ball = save->ball;
+        situation_now.map.hit = save->hit;
+        situation_now.map.hits = save->hits;
     }
 
-    bool erase(int back_up_id) {
-        if (back_up.find(back_up_id) != back_up.end()) {
-            back_up.erase(back_up_id);
-            return true;
-        } else
-            return false;
-    }
-
-    ~Game() {
-
+    void erase(Save *save) {
+        delete save;
     }
 };
-
 
 #endif //BRICK_OUT_GAME_H
