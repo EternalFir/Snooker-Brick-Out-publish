@@ -115,7 +115,7 @@ public:
             situation_now.ball.color_before++;
         else
             situation_now.ball.color_before = 0;
-        if (situation_now.ball.color_before == 5) {
+        if (situation_now.ball.color_before == 3) {
             reward += 50;
             situation_now.ball.color_before = 0;
         }
